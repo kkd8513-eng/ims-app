@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>계측기 관리 · 플러스이엔지</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0e1923; --c1:#16232f; --c2:#1d2f3f; --c3:#253649;
+  --bd:rgba(255,255,255,.07); --bdr:rgba(255,255,255,.04);
+  --tx:#eef4ff; --t2:#8daabb; --t3:#3a556a;
+  --cy:#00d8ec;  --cy2:rgba(0,216,236,.14);
+  --gn:#10c96e;  --gn2:rgba(16,201,110,.13);
+  --og:#f59e0b;  --og2:rgba(245,158,11,.13);
+  --rd:#f04545;  --rd2:rgba(240,69,69,.13);
+  --bl:#4d9ef7;  --bl2:rgba(77,158,247,.13);
+  --pu:#a371f7;  --pu2:rgba(163,113,247,.13);
+  --mono:'JetBrains Mono',monospace; --sans:'Noto Sans KR',sans-serif;
+  --nav:52px; --hdr:50px;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:var(--sans)}
+.app{display:flex;flex-direction:column;height:100%;max-width:430px;margin:0 auto;background:var(--bg)}
+
+/* HEADER */
+.hdr{height:var(--hdr);background:var(--c1);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 14px;gap:8px;flex-shrink:0}
+.hdr-l{flex:1;min-width:0}
+.hdr-title{font-size:17px;font-weight:800;letter-spacing:-.02em}
+.hdr-title b{color:var(--cy);font-weight:800}
+.hdr-dt{font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:3px;letter-spacing:.03em}
+.sync-btn{background:var(--gn);color:#fff;font-size:12px;font-weight:700;padding:7px 12px;border-radius:20px;border:none;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 10px rgba(16,201,110,.4)}
+.sync-btn.busy{background:var(--t3);pointer-events:none}
+.sync-btn.ok{background:var(--cy)}
+
+/* SCROLL */
+.body{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav)+6px)}
+.page{display:none}.page.on{display:block}
+
+/* BOTTOM NAV */
+.bnav{height:var(--nav);background:var(--c1);border-top:1px solid var(--bd);display:flex;flex-shrink:0}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:none;color:var(--t3);cursor:pointer;font-family:var(--sans);transition:color .15s;position:relative;padding:0}
+.bn.on{color:var(--cy)}
+.bn-i{font-size:16px;line-height:1}
+.bn-l{font-size:8px;font-weight:700;letter-spacing:.01em;white-space:nowrap}
+.bn-dot{position:absolute;top:6px;right:calc(50% - 10px);width:6px;height:6px;background:var(--rd);border-radius:50%;border:1.5px solid var(--c1);display:none}
+.bn-dot.on{display:block}
+
+/* ACTION BAR */
+.abar{padding:9px 14px;border-top:1px solid var(--bd);display:none;gap:8px;flex-shrink:0;background:var(--bg)}
+.abar.on{display:flex}
+.ab{flex:1;padding:13px;border-radius:12px;font-size:15px;font-weight:700;border:none;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;justify-content:center;gap:7px}
+.ab:active{opacity:.77}.ab:disabled{opacity:.3;pointer-events:none}
+.ab-ghost{background:var(--c2);color:var(--t2);border:1px solid var(--bd);flex:0 0 auto;padding:13px 12px;font-size:13px}
+.ab-rent{background:var(--og);color:#000;box-shadow:0 2px 12px rgba(245,158,11,.35)}
+.ab-ret{background:var(--gn);color:#fff;box-shadow:0 2px 12px rgba(16,201,110,.35)}
+
+/* SECTION LABEL */
+.slbl{padding:12px 14px 6px;font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;justify-content:space-between}
+.slbl-r{font-family:var(--mono);font-size:11px;color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0}
+
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 14px 4px}
+.dcard{background:var(--c1);border:1px solid var(--bd);border-radius:14px;padding:13px;display:flex;align-items:center;gap:11px}
+.dcard-ico{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.dcard.bl .dcard-ico{background:var(--bl2)}.dcard.gn .dcard-ico{background:var(--gn2)}
+.dcard.og .dcard-ico{background:var(--og2)}.dcard.rd .dcard-ico{background:var(--rd2)}
+.dcard-val{font-family:var(--mono);font-size:24px;font-weight:700;line-height:1}
+.dcard-lbl{font-size:10px;color:var(--t2);margin-top:3px}
+.dcard.bl .dcard-val{color:var(--bl)}.dcard.gn .dcard-val{color:var(--gn)}
+.dcard.og .dcard-val{color:var(--og)}.dcard.rd .dcard-val{color:var(--rd)}
+
+.office-bar{padding:10px 14px 4px;display:flex;align-items:center;gap:8px}
+.o-tag{font-size:10px;font-family:var(--mono);font-weight:700;padding:2px 9px;border-radius:6px}
+.o-tag.pt{background:var(--bl2);color:var(--bl)}
+.o-tag.yj{background:var(--pu2);color:var(--pu)}
+.o-name{font-size:13px;font-weight:700}
+
+/* INSTRUMENT CARDS */
+.ilist{padding:0 14px}
+.icard{background:var(--c1);border:1px solid var(--bd);border-radius:16px;padding:14px 15px;margin-bottom:10px;cursor:pointer;transition:border-color .15s}
+.icard:active{opacity:.88;transform:scale(.99)}
+.ic-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px}
+.ic-no{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--cy);letter-spacing:.05em}
+.ic-bdg{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;flex-shrink:0;margin-left:6px}
+.ic-bdg.av{background:var(--gn2);color:var(--gn);border:1px solid rgba(16,201,110,.25)}
+.ic-bdg.rt{background:var(--og2);color:var(--og);border:1px solid rgba(245,158,11,.25)}
+.ic-bdg.ex{background:var(--rd2);color:var(--rd);border:1px solid rgba(240,69,69,.25)}
+.ic-bdg.wn{background:var(--og2);color:var(--og);border:1px solid rgba(245,158,11,.25)}
+.ic-name-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.ic-emo{font-size:18px;flex-shrink:0}
+.ic-name{font-size:16px;font-weight:700;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ic-det{font-size:12px;color:var(--t2);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ic-tags{display:flex;flex-wrap:wrap;gap:5px}
+.ictag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;font-family:var(--mono)}
+.ictag.dok{background:var(--gn2);color:var(--gn)}
+.ictag.dwn{background:var(--og2);color:var(--og)}
+.ictag.dex{background:var(--rd2);color:var(--rd)}
+.ictag.gray{background:var(--c3);color:var(--t2)}
+
+/* SEARCH + CHIPS */
+.srch-wrap{padding:12px 14px 0;position:relative}
+.srch-inp{width:100%;background:var(--c2);border:1px solid var(--bd);border-radius:12px;padding:11px 14px 11px 42px;font-size:14px;color:var(--tx);font-family:var(--sans);outline:none;-webkit-appearance:none;transition:border-color .15s}
+.srch-inp:focus{border-color:var(--cy)}
+.srch-inp::placeholder{color:var(--t3)}
+.srch-ico{position:absolute;left:27px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none}
+.chips{display:flex;gap:7px;padding:10px 14px 8px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--bd);background:var(--c2);color:var(--t2);cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:var(--sans);transition:all .15s}
+.chip.on{background:var(--cy2);border-color:rgba(0,216,236,.4);color:var(--cy)}
+
+/* BORROWER LIST */
+.bcard{background:var(--c1);border:1px solid var(--bd);border-radius:14px;margin:0 14px 10px;overflow:hidden}
+.brow{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--bdr)}
+.brow:last-child{border-bottom:none}
+.bav{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;background:var(--c3)}
+.bbody{flex:1;min-width:0}
+.bname{font-size:14px;font-weight:700}
+.bmeta{font-size:11px;color:var(--t2);margin-top:2px;font-family:var(--mono)}
+.bright{text-align:right;flex-shrink:0}
+.brented-nm{font-size:10px;color:var(--og);font-weight:700;font-family:var(--mono);margin-bottom:2px;white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis}
+.bst{font-size:10px;padding:2px 8px;border-radius:20px;font-family:var(--mono);font-weight:700;white-space:nowrap}
+.bst.av{background:var(--gn2);color:var(--gn)}.bst.rt{background:var(--og2);color:var(--og)}
+
+/* HISTORY */
+.hcard{background:var(--c1);border:1px solid var(--bd);border-radius:14px;margin:0 14px 10px;overflow:hidden}
+.hrow{display:flex;align-items:flex-start;gap:11px;padding:12px 14px;border-bottom:1px solid var(--bdr)}
+.hrow:last-child{border-bottom:none}
+.hico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.hico.rent{background:var(--og2)}.hico.ret{background:var(--gn2)}
+.hbody{flex:1;min-width:0}
+.hnm{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hmeta{font-size:11px;color:var(--t2);margin-top:2px;font-family:var(--mono)}
+.hnote{font-size:11px;color:var(--t2);margin-top:2px;font-style:italic}
+.hright{text-align:right;flex-shrink:0}
+.hday{font-family:var(--mono);font-size:12px;font-weight:700}
+.hday.active{color:var(--og)}.hday.done{color:var(--gn)}.hday.over{color:var(--rd)}
+.hst{font-size:10px;color:var(--t2);margin-top:2px;font-family:var(--mono)}
+
+/* CAL TAGS */
+.caltag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:10px;font-family:var(--mono);font-weight:700}
+.caltag.g{background:var(--gn2);color:var(--gn)}
+.caltag.o{background:var(--og2);color:var(--og)}
+.caltag.r{background:var(--rd2);color:var(--rd)}
+.caltag.u{background:var(--c3);color:var(--t2)}
+
+/* FORM */
+.fsec{padding:11px 16px 7px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--t2);border-top:1px solid var(--bdr)}
+.fsec:first-child{border-top:none;padding-top:13px}
+.fld{padding:0 16px 11px}
+.fld label{display:block;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--t2);margin-bottom:6px}
+.fld input,.fld textarea{width:100%;background:var(--c2);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--tx);font-family:var(--sans);outline:none;-webkit-appearance:none;transition:border-color .15s;resize:none}
+.fld input:focus,.fld textarea:focus{border-color:var(--cy)}
+.fld input::placeholder,.fld textarea::placeholder{color:var(--t3)}
+.ferr{font-size:11px;color:var(--rd);margin-top:5px;display:none}
+.fok{font-size:11px;color:var(--gn);margin-top:5px;display:none}
+
+/* AUTOCOMPLETE */
+.acw{position:relative}
+.acd{position:absolute;left:0;right:0;top:calc(100%+3px);background:var(--c1);border:1px solid var(--cy);border-radius:11px;overflow:hidden;display:none;max-height:220px;overflow-y:auto;z-index:60;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.acd.on{display:block}
+.aci{padding:11px 14px;font-size:14px;cursor:pointer;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+.aci:last-child{border-bottom:none}
+.aci:active{background:var(--c2)}
+.acm{font-size:11px;color:var(--t2);font-family:var(--mono)}
+.acn{padding:14px;text-align:center;font-size:12px;color:var(--t3)}
+
+/* QR BOX */
+.qrb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;margin:6px 16px 0;padding:20px 16px;background:var(--c2);border:2px dashed var(--bd);border-radius:14px;cursor:pointer;transition:all .18s;min-height:90px}
+.qrb:active{transform:scale(.97)}
+.qrb.sc{border-style:solid;border-color:var(--gn);background:var(--gn2)}
+.qrb .qi{font-size:26px;opacity:.6}.qrb .qt{font-size:14px;font-weight:700}.qrb .qs{font-size:11px;color:var(--t2)}
+
+/* SCAN RESULT */
+.srbox{display:none;margin:8px 16px 0;background:var(--c2);border:1px solid rgba(16,201,110,.4);border-radius:11px;padding:12px 14px}
+.srbox.on{display:block}
+.sr-id{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--t2)}
+.sr-name{font-size:15px;font-weight:700;color:var(--gn);margin:3px 0}
+.sr-meta{font-size:12px;color:var(--t2)}
+.sr-loc{display:inline-block;margin-top:5px;font-family:var(--mono);font-size:10px;background:var(--c3);padding:2px 8px;border-radius:6px;color:var(--t2)}
+
+/* CONFIRM */
+.cfb{display:none;margin:10px 16px 0;border-radius:13px;overflow:hidden}
+.cfb.on{display:block}
+.cfb.rent{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.25)}
+.cfb.ret{background:rgba(16,201,110,.06);border:1px solid rgba(16,201,110,.25)}
+.cfhd{padding:9px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid rgba(255,255,255,.06)}
+.cfb.rent .cfhd{color:var(--og)}.cfb.ret .cfhd{color:var(--gn)}
+.cfr{display:flex;justify-content:space-between;align-items:center;padding:7px 14px;border-bottom:1px solid rgba(255,255,255,.04)}
+.cfr:last-child{border-bottom:none}
+.cfl{font-size:12px;color:var(--t2)}.cfv{font-size:12px;font-weight:700;font-family:var(--mono);text-align:right;max-width:56%;word-break:break-all}
+
+/* SCANNER */
+.scnov{display:none;position:fixed;inset:0;background:#000;z-index:1000;flex-direction:column}
+.scnov.on{display:flex}
+.scnhdr{display:flex;align-items:center;gap:12px;padding:14px;padding-top:calc(14px + env(safe-area-inset-top));background:rgba(0,0,0,.85);position:absolute;top:0;left:0;right:0;z-index:2}
+.scnttl{font-size:15px;font-weight:700;color:#fff;flex:1}
+.scnx{background:rgba(255,255,255,.12);border:none;color:#fff;font-size:17px;cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.scnbody{flex:1;position:relative;overflow:hidden}
+#qrel{width:100%;height:100%}
+#qrel video{width:100%!important;height:100%!important;object-fit:cover!important}
+.scnfr{position:absolute;top:50%;left:50%;transform:translate(-50%,-62%);width:200px;height:200px;z-index:3;pointer-events:none}
+.sf{position:absolute;width:22px;height:22px}
+.sf.tl{top:0;left:0;border-top:2.5px solid var(--cy);border-left:2.5px solid var(--cy);border-radius:3px 0 0 0}
+.sf.tr{top:0;right:0;border-top:2.5px solid var(--cy);border-right:2.5px solid var(--cy);border-radius:0 3px 0 0}
+.sf.bl{bottom:0;left:0;border-bottom:2.5px solid var(--cy);border-left:2.5px solid var(--cy);border-radius:0 0 0 3px}
+.sf.br{bottom:0;right:0;border-bottom:2.5px solid var(--cy);border-right:2.5px solid var(--cy);border-radius:0 0 3px 0}
+.scnfoot{padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom));background:rgba(0,0,0,.85);text-align:center;font-size:12px;color:rgba(255,255,255,.4)}
+
+/* MODAL */
+.bsov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:900;align-items:flex-end;justify-content:center}
+.bsov.on{display:flex}
+.bsht{background:var(--c1);border-radius:22px 22px 0 0;width:100%;max-width:430px;max-height:92vh;overflow-y:auto;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+.bsbar{width:34px;height:4px;background:var(--bd);border-radius:2px;margin:12px auto}
+.bshd{display:flex;align-items:center;justify-content:space-between;padding:0 16px 11px;border-bottom:1px solid var(--bd)}
+.bshd-t{font-size:15px;font-weight:700}
+.bshd-x{background:var(--c2);border:none;color:var(--t2);width:28px;height:28px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+/* QR PRINT */
+.qrdisp{display:flex;justify-content:center;padding:16px;background:#fff;border-radius:12px;margin-bottom:10px}
+.qrnm{font-size:16px;font-weight:700;text-align:center}
+.qrid{font-family:var(--mono);font-size:11px;color:var(--t2);text-align:center;margin-top:3px}
+
+/* SETTINGS */
+.cfcard{background:var(--c1);border:1px solid var(--bd);border-radius:14px;margin:0 14px 10px;overflow:hidden}
+.cfrow2{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--bdr)}
+.cfrow2:last-child{border-bottom:none}
+.cflbl{font-size:13px;font-weight:600}
+.cfsub{font-size:11px;color:var(--t2);margin-top:2px}
+.cfbtn{background:var(--cy2);border:none;color:var(--cy);font-size:12px;font-weight:700;padding:6px 12px;border-radius:8px;cursor:pointer;font-family:var(--sans)}
+.cfbtn.r{background:var(--rd2);color:var(--rd)}
+.cblk{background:#060d14;border:1px solid var(--bd);border-radius:10px;padding:12px;font-family:var(--mono);font-size:9.5px;color:#7ee787;line-height:1.75;white-space:pre;overflow-x:auto;max-height:200px;overflow-y:auto;margin:6px 14px}
+
+/* EMPTY */
+.empty{padding:36px 20px;text-align:center;color:var(--t2)}
+.empty .ei{font-size:32px;opacity:.2;margin-bottom:10px}
+.empty p{font-size:12px}
+
+/* TOAST */
+#toasts{position:fixed;top:calc(var(--hdr)+8px);left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;width:88%;max-width:380px}
+.toast{padding:10px 16px;border-radius:28px;font-size:13px;font-weight:600;animation:tIn .2s ease;text-align:center;width:100%;box-shadow:0 4px 20px rgba(0,0,0,.55);pointer-events:all}
+.toast.ok{background:var(--gn);color:#fff}.toast.er{background:var(--rd);color:#fff}.toast.i{background:var(--c3);color:var(--tx);border:1px solid var(--bd)}
+@keyframes tIn{from{transform:translateY(-10px);opacity:0}to{transform:none;opacity:1}}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--bd)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-l">
+    <div class="hdr-title">계측기 <b>관리</b></div>
+    <div class="hdr-dt" id="hdr-dt"></div>
+  </div>
+  <button class="sync-btn" id="sync-btn" onclick="syncAll()">↑ 동기화</button>
+</div>
+
+<!-- PAGES -->
+<div class="body" id="body">
+
+<!-- ── 대시보드 ── -->
+<div class="page on" id="p-dash">
+  <div class="dash-grid">
+    <div class="dcard bl"><div class="dcard-ico bl">🔧</div><div><div class="dcard-val" id="d-tot">0</div><div class="dcard-lbl">전체 계측기</div></div></div>
+    <div class="dcard gn"><div class="dcard-ico gn">✅</div><div><div class="dcard-val" id="d-av">0</div><div class="dcard-lbl">대여 가능</div></div></div>
+    <div class="dcard og"><div class="dcard-ico og">📤</div><div><div class="dcard-val" id="d-rt">0</div><div class="dcard-lbl">대여 중</div></div></div>
+    <div class="dcard rd"><div class="dcard-ico rd">⚠️</div><div><div class="dcard-val" id="d-ex">0</div><div class="dcard-lbl">교정 만료</div></div></div>
+  </div>
+  <div class="slbl">교정 임박 <span style="font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--t3)">90일 이내</span><span class="slbl-r" id="d-wn-cnt"></span></div>
+  <div id="d-wn"></div>
+  <div class="office-bar"><span class="o-tag pt">평택</span><span class="o-name">평택 대여현황</span></div>
+  <div id="d-pt" style="margin-bottom:4px"></div>
+  <div class="office-bar"><span class="o-tag yj">용인</span><span class="o-name">용인 대여현황</span></div>
+  <div id="d-yj" style="margin-bottom:8px"></div>
+</div>
+
+<!-- ── 대여 ── -->
+<div class="page" id="p-rent">
+  <div class="fsec" style="border-top:none;padding-top:13px">관리자</div>
+  <div class="fld">
+    <label>관리자 이름 *</label>
+    <input id="r-mgr" type="text" placeholder="예: 김경도" oninput="rUpd()" autocomplete="off">
+  </div>
+  <div class="fsec">대여자 <span style="font-size:9px;text-transform:none;letter-spacing:0;color:var(--t3)">— 대여자 명단에 있는 사람만 가능</span></div>
+  <div class="fld">
+    <label>대여자 이름 *</label>
+    <div class="acw">
+      <input id="r-bor" type="text" placeholder="이름 검색..." oninput="acF('r')" onfocus="acO('r')" onblur="acH('r')" autocomplete="off">
+      <div class="acd" id="r-ac"></div>
+    </div>
+    <div class="ferr" id="r-berr">⚠ 대여자 명단에 없는 이름입니다</div>
+    <div class="fok"  id="r-bok">✓ 확인됨</div>
+  </div>
+  <div class="fld">
+    <label>사용 장소 *</label>
+    <input id="r-loc" type="text" placeholder="예: 평택 생산라인 A구역" oninput="rUpd()" autocomplete="off">
+  </div>
+  <div class="fsec">계측기 QR 스캔</div>
+  <div class="qrb" id="r-qrb" onclick="startScan('rent')">
+    <div class="qi">📷</div><div class="qt">QR 스캔</div><div class="qs">계측기에 부착된 QR코드를 스캔하세요</div>
+  </div>
+  <div class="srbox" id="r-sr">
+    <div class="sr-id" id="r-sr-id"></div>
+    <div class="sr-name" id="r-sr-name"></div>
+    <div class="sr-meta" id="r-sr-meta"></div>
+    <div><span class="sr-loc" id="r-sr-loc"></span></div>
+    <div style="margin-top:5px" id="r-sr-cal"></div>
+  </div>
+  <div class="cfb rent" id="r-cf">
+    <div class="cfhd">📤 대여 확인</div>
+    <div class="cfr"><span class="cfl">계측기</span><span class="cfv" id="rc-nm"></span></div>
+    <div class="cfr"><span class="cfl">관리번호</span><span class="cfv" id="rc-id"></span></div>
+    <div class="cfr"><span class="cfl">보관위치</span><span class="cfv" id="rc-lc2"></span></div>
+    <div class="cfr"><span class="cfl">관리자</span><span class="cfv" id="rc-mg"></span></div>
+    <div class="cfr"><span class="cfl">대여자</span><span class="cfv" id="rc-br"></span></div>
+    <div class="cfr"><span class="cfl">사용 장소</span><span class="cfv" id="rc-lc"></span></div>
+    <div class="cfr"><span class="cfl">일시</span><span class="cfv" id="rc-dt"></span></div>
+  </div>
+  <div style="height:14px"></div>
+</div>
+
+<!-- ── 반납 ── -->
+<div class="page" id="p-ret">
+  <div class="fsec" style="border-top:none;padding-top:13px">관리자</div>
+  <div class="fld">
+    <label>관리자 이름 *</label>
+    <input id="t-mgr" type="text" placeholder="예: 김경도" oninput="tUpd()" autocomplete="off">
+  </div>
+  <div class="fsec">반납자 <span style="font-size:9px;text-transform:none;letter-spacing:0;color:var(--t3)">— 빌려간 사람</span></div>
+  <div class="fld">
+    <label>반납자 이름 *</label>
+    <div class="acw">
+      <input id="t-bor" type="text" placeholder="이름 검색..." oninput="acF('t')" onfocus="acO('t')" onblur="acH('t')" autocomplete="off">
+      <div class="acd" id="t-ac"></div>
+    </div>
+    <div class="ferr" id="t-berr">⚠ 대여자 명단에 없는 이름입니다</div>
+    <div class="fok"  id="t-bok">✓ 확인됨</div>
+  </div>
+  <div class="fsec">계측기 QR 스캔</div>
+  <div class="qrb" id="t-qrb" onclick="startScan('ret')">
+    <div class="qi">📷</div><div class="qt">QR 스캔</div><div class="qs">반납할 계측기의 QR코드를 스캔하세요</div>
+  </div>
+  <div class="srbox" id="t-sr">
+    <div class="sr-id" id="t-sr-id"></div>
+    <div class="sr-name" id="t-sr-name"></div>
+    <div class="sr-meta" id="t-sr-meta"></div>
+  </div>
+  <div class="fsec">특이사항</div>
+  <div class="fld">
+    <label>특이사항 (이상 없으면 빈칸)</label>
+    <textarea id="t-note" rows="3" placeholder="예: 외관 스크래치, 배터리 방전, 부품 이상 등" oninput="tUpd()"></textarea>
+  </div>
+  <div class="cfb ret" id="t-cf">
+    <div class="cfhd">📥 반납 확인</div>
+    <div class="cfr"><span class="cfl">계측기</span><span class="cfv" id="tc-nm"></span></div>
+    <div class="cfr"><span class="cfl">관리번호</span><span class="cfv" id="tc-id"></span></div>
+    <div class="cfr"><span class="cfl">원 대여자</span><span class="cfv" id="tc-ob"></span></div>
+    <div class="cfr"><span class="cfl">처리 관리자</span><span class="cfv" id="tc-mg"></span></div>
+    <div class="cfr"><span class="cfl">반납자</span><span class="cfv" id="tc-br"></span></div>
+    <div class="cfr"><span class="cfl">특이사항</span><span class="cfv" id="tc-nt"></span></div>
+    <div class="cfr"><span class="cfl">일시</span><span class="cfv" id="tc-dt"></span></div>
+  </div>
+  <div style="height:14px"></div>
+</div>
+
+<!-- ── 계측기 ── -->
+<div class="page" id="p-inst">
+  <div class="srch-wrap">
+    <span class="srch-ico">🔍</span>
+    <input class="srch-inp" id="i-search" type="text" placeholder="관리번호 / 기기명 / 시리얼번호..." oninput="renderInst()">
+  </div>
+  <div class="chips">
+    <div class="chip on" data-f="all" onclick="setChip(this,'all')">전체</div>
+    <div class="chip" data-f="av"  onclick="setChip(this,'av')">대여 가능</div>
+    <div class="chip" data-f="rt"  onclick="setChip(this,'rt')">대여 중</div>
+    <div class="chip" data-f="ex"  onclick="setChip(this,'ex')">교정 만료</div>
+    <div class="chip" data-f="wn"  onclick="setChip(this,'wn')">교정 임박</div>
+  </div>
+  <div class="ilist" id="i-list"></div>
+</div>
+
+<!-- ── 대여자 ── -->
+<div class="page" id="p-bor">
+  <div class="srch-wrap">
+    <span class="srch-ico">🔍</span>
+    <input class="srch-inp" id="b-search" type="text" placeholder="이름 / 부서 검색..." oninput="renderBor()">
+  </div>
+  <div style="height:6px"></div>
+  <div id="b-list"></div>
+</div>
+
+<!-- ── 이력 ── -->
+<div class="page" id="p-hist">
+  <div class="srch-wrap">
+    <span class="srch-ico">🔍</span>
+    <input class="srch-inp" id="h-search" type="text" placeholder="계측기명 / 대여자 검색..." oninput="renderHist()">
+  </div>
+  <div class="chips">
+    <div class="chip on" data-hf="all"    onclick="setHChip(this,'all')">전체</div>
+    <div class="chip" data-hf="active"    onclick="setHChip(this,'active')">대여중</div>
+    <div class="chip" data-hf="done"      onclick="setHChip(this,'done')">반납완료</div>
+    <div class="chip" data-hf="over"      onclick="setHChip(this,'over')">30일+</div>
+  </div>
+  <div class="hcard" id="h-list"></div>
+</div>
+
+<!-- ── 설정 ── -->
+<div class="page" id="p-cfg">
+  <div class="slbl" style="padding-top:12px">🔗 Google Sheets 연동</div>
+  <div class="cfcard">
+    <div class="fld" style="padding-top:12px">
+      <label>Apps Script 웹앱 URL</label>
+      <input id="c-url" type="url" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:11px">
+    </div>
+    <div class="fld">
+      <label>관리자 이름 (기본값)</label>
+      <input id="c-aname" type="text" placeholder="예: 김경도">
+    </div>
+    <div class="fld">
+      <label>관리자 이메일 (미반납 CC 수신)</label>
+      <input id="c-aemail" type="email" placeholder="kdkim@pluseng.co.kr" style="font-size:12px">
+    </div>
+    <div style="padding:0 14px 12px;display:flex;gap:8px">
+      <button onclick="saveCfg()" style="flex:1;padding:13px;border-radius:10px;background:var(--cy);color:#000;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:var(--sans)">저장</button>
+      <button onclick="syncAll()" style="padding:13px 13px;border-radius:10px;background:var(--c2);color:var(--t2);font-size:13px;font-weight:700;border:1px solid var(--bd);cursor:pointer;font-family:var(--sans)">동기화</button>
+    </div>
+    <div style="padding:0 14px 11px;font-family:var(--mono);font-size:10px;color:var(--t3)" id="c-sync-lbl"></div>
+  </div>
+
+  <div class="slbl">📋 Sheets 구성</div>
+  <div class="cfcard">
+    <div style="padding:12px 14px;font-size:12px;color:var(--t2);line-height:2">
+      <strong style="color:var(--cy)">시트명 그대로 사용합니다 ✓</strong><br>
+      <span style="font-family:var(--mono);font-size:10px">계측기 관리대장</span> — 관리번호, 기기명, 모델명, 시리얼번호, 제조사, 사용용도, 교정주기, 교정일자, 교정만료일, 보관위치, 상태, 대여자, 비고<br>
+      <span style="font-family:var(--mono);font-size:10px">대여자 명단</span> — 이름, 부서, 이메일, 연락처<br>
+      <span style="font-family:var(--mono);font-size:10px">대여/반납 이력</span> — 대여/반납 구분, 관리번호, 계측기명, 대여자명, 부서, 연락처, 일시, 관리자, 사용장소, 특이사항
+    </div>
+  </div>
+
+  <div class="slbl">📜 Apps Script 코드</div>
+  <div style="padding:0 14px 6px;font-size:11px;color:var(--t2);line-height:1.7">
+    확장 프로그램 → Apps Script → 붙여넣기 → 저장 → 배포 → 웹앱<br>
+    실행: <strong style="color:var(--tx)">나</strong> / 액세스: <strong style="color:var(--tx)">모든 사용자</strong> → URL 복사 → 위에 입력<br>
+    그 후 <code style="color:var(--cy);font-family:var(--mono)">setupTrigger</code> 함수 <strong style="color:var(--tx)">1회 실행</strong> → 30/60/90일 이메일 자동화
+  </div>
+  <div class="cblk" id="c-script"></div>
+
+  <div class="slbl" style="margin-top:4px">🖨 QR 코드 출력</div>
+  <div class="cfcard">
+    <div class="cfrow2"><div><div class="cflbl">전체 QR 인쇄</div><div class="cfsub">A4 4열 라벨 형식</div></div><button class="cfbtn" onclick="printAll()">인쇄</button></div>
+    <div id="c-qrlist" style="border-top:1px solid var(--bdr)"></div>
+  </div>
+
+  <div class="slbl" style="margin-top:4px">💾 데이터</div>
+  <div class="cfcard">
+    <div class="cfrow2"><div><div class="cflbl">JSON 백업</div><div class="cfsub">로컬 캐시 내보내기</div></div><button class="cfbtn" onclick="expData()">내보내기</button></div>
+    <div class="cfrow2"><div><div class="cflbl">JSON 복원</div><div class="cfsub">백업 파일 가져오기</div></div><button class="cfbtn" onclick="impData()">가져오기</button></div>
+    <div class="cfrow2"><div><div class="cflbl">초기화</div><div class="cfsub">로컬 캐시 삭제</div></div><button class="cfbtn r" onclick="clrData()">초기화</button></div>
+  </div>
+  <div style="height:14px"></div>
+</div>
+
+</div><!-- /body -->
+<div class="abar" id="abar"></div>
+<div class="bnav">
+  <button class="bn on" data-p="dash" onclick="nav('dash')"><div class="bn-i">📊</div><div class="bn-l">대시보드</div></button>
+  <button class="bn" data-p="rent"    onclick="nav('rent')"><div class="bn-i">📤</div><div class="bn-l">대여</div></button>
+  <button class="bn" data-p="ret"     onclick="nav('ret')"><div class="bn-i">📥</div><div class="bn-l">반납</div></button>
+  <button class="bn" data-p="inst"    onclick="nav('inst')"><div class="bn-i">🔧</div><div class="bn-l">계측기</div></button>
+  <button class="bn" data-p="bor"     onclick="nav('bor')"><div class="bn-i">👤</div><div class="bn-l">대여자</div></button>
+  <button class="bn" data-p="hist"    onclick="nav('hist')"><div class="bn-i">📋</div><div class="bn-l">이력</div><div class="bn-dot" id="od-dot"></div></button>
+  <button class="bn" data-p="cfg"     onclick="nav('cfg')"><div class="bn-i">⚙️</div><div class="bn-l">설정</div></button>
+</div>
+</div>
+
+<!-- SCANNER -->
+<div class="scnov" id="scnov">
+  <div class="scnhdr"><div class="scnttl" id="scnttl">QR 스캔</div><button class="scnx" onclick="closeScan()">✕</button></div>
+  <div class="scnbody"><div id="qrel"></div><div class="scnfr"><div class="sf tl"></div><div class="sf tr"></div><div class="sf bl"></div><div class="sf br"></div></div></div>
+  <div class="scnfoot">카메라를 QR 코드에 맞추세요 — 자동 인식</div>
+</div>
+
+<!-- QR MODAL -->
+<div class="bsov" id="m-qr" onclick="if(event.target===this)closeM('m-qr')">
+  <div class="bsht"><div class="bsbar"></div>
+    <div class="bshd"><div class="bshd-t">QR 코드</div><button class="bshd-x" onclick="closeM('m-qr')">✕</button></div>
+    <div style="padding:14px">
+      <div class="qrdisp"><div id="m-qr-el"></div></div>
+      <div class="qrnm" id="m-qr-nm"></div><div class="qrid" id="m-qr-id"></div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button onclick="printOne()" style="padding:12px;border-radius:10px;background:var(--c2);color:var(--t2);border:1px solid var(--bd);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);flex:0 0 auto">🖨 인쇄</button>
+        <button onclick="closeM('m-qr')" style="flex:1;padding:12px;border-radius:10px;background:var(--cy);color:#000;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:var(--sans)">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="bsov" id="m-dtl" onclick="if(event.target===this)closeM('m-dtl')">
+  <div class="bsht"><div class="bsbar"></div>
+    <div class="bshd"><div class="bshd-t" id="m-dtl-ttl">상세정보</div><button class="bshd-x" onclick="closeM('m-dtl')">✕</button></div>
+    <div id="m-dtl-body" style="padding:0 0 6px"></div>
+  </div>
+</div>
+
+<input type="file" id="imp-f" accept=".json" style="display:none" onchange="doImp(event)">
+<div id="toasts"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE  (스프레드시트 구조 그대로 매핑)
+// ═══════════════════════════════════════════════════════
+var D={inst:[],bor:[],hist:[],cfg:{url:'',aname:'',aemail:'',sync:null}};
+var qrSc=null,scanFor='',rInst=null,tInst=null,curQrI=null,iFilter='all',hFilter='all';
+
+function load(){try{var x=localStorage.getItem('ims7');if(x)D=JSON.parse(x);}catch(e){}}
+function save(){localStorage.setItem('ims7',JSON.stringify(D));}
+
+// ═══ CLOCK ═══
+function tick(){
+  var n=new Date();
+  var ap=n.getHours()<12?'오전':'오후';
+  var h=n.getHours()%12||12;
+  var el=document.getElementById('hdr-dt');
+  if(el) el.textContent=n.getFullYear()+'. '+(n.getMonth()+1)+'. '+n.getDate()+'. '+ap+' '+h+':'+(''+n.getMinutes()).padStart(2,'0');
+}
+setInterval(tick,1000);tick();
+
+// ═══ CALIBRATION ═══
+function calSt(d){
+  if(!d)return{cls:'u',days:null,lbl:'미입력'};
+  var exp=new Date(d);exp.setHours(0,0,0,0);
+  var now=new Date();now.setHours(0,0,0,0);
+  var n=Math.floor((exp-now)/864e5);
+  if(n<0)  return{cls:'r',days:n,lbl:'만료 '+Math.abs(n)+'일 경과'};
+  if(n<=90)return{cls:'o',days:n,lbl:n+'일 남음'};
+  return{cls:'g',days:n,lbl:fd(d)+' 만료'};
+}
+function calTag(d){var s=calSt(d),ico={g:'🟢',o:'🟠',r:'🔴',u:'⚪'};return '<span class="caltag '+s.cls+'">'+ico[s.cls]+' '+s.lbl+'</span>';}
+function dDayTag(d){
+  var s=calSt(d);if(s.days===null)return '';
+  if(s.days<0)  return '<span class="ictag dex">D+'+Math.abs(s.days)+'</span>';
+  if(s.days<=90)return '<span class="ictag dwn">D-'+s.days+'</span>';
+  return '<span class="ictag dok">D-'+s.days+'</span>';
+}
+function instIco(name){
+  if(!name)return'🔧';var n=name.toLowerCase();
+  if(n.includes('소음'))return'🔊';
+  if(n.includes('온')&&(n.includes('습')||n.includes('습도')))return'🌡️';
+  if(n.includes('전류')||n.includes('전압')||n.includes('클램프'))return'⚡';
+  if(n.includes('멀티')||n.includes('multimeter'))return'🔌';
+  if(n.includes('조도')||n.includes('lux'))return'💡';
+  if(n.includes('열화상'))return'📸';
+  if(n.includes('particle')||n.includes('counter'))return'🔬';
+  if(n.includes('저울'))return'⚖️';
+  if(n.includes('토크')||n.includes('torque')||n.includes('driver'))return'🔩';
+  if(n.includes('캘리퍼')||n.includes('caliper')||n.includes('digimatic'))return'📐';
+  if(n.includes('분동'))return'🏋️';
+  if(n.includes('풍속'))return'💨';
+  if(n.includes('용접'))return'🔥';
+  if(n.includes('온도')||n.includes('적외선'))return'🌡️';
+  if(n.includes('차압'))return'📊';
+  if(n.includes('air')||n.includes('particle'))return'🔬';
+  return'🔧';
+}
+
+// ═══ NAVIGATION ═══
+var TITLES={dash:'대시보드',rent:'📤 대여하기',ret:'📥 반납하기',inst:'계측기 목록',bor:'대여자 목록',hist:'대여·반납 이력',cfg:'설정'};
+var RENDERS={dash:renderDash,rent:renderRent,ret:renderRet,inst:renderInst,bor:renderBor,hist:renderHist,cfg:renderCfg};
+
+function nav(p){
+  document.querySelectorAll('.page').forEach(function(x){x.classList.remove('on');});
+  document.querySelectorAll('.bn').forEach(function(x){x.classList.remove('on');});
+  document.getElementById('p-'+p).classList.add('on');
+  var ni=document.querySelector('[data-p="'+p+'"]');if(ni)ni.classList.add('on');
+  document.getElementById('body').scrollTop=0;
+  var ab=document.getElementById('abar');
+  if(p==='rent'){
+    ab.className='abar on';
+    ab.innerHTML='<button class="ab ab-ghost" onclick="rstRent()">초기화</button><button class="ab ab-rent" id="r-sub" disabled onclick="subRent()">✅ 대여 처리</button>';
+  }else if(p==='ret'){
+    ab.className='abar on';
+    ab.innerHTML='<button class="ab ab-ghost" onclick="rstRet()">초기화</button><button class="ab ab-ret" id="t-sub" disabled onclick="subRet()">✅ 반납 처리</button>';
+  }else ab.className='abar';
+  if(RENDERS[p])RENDERS[p]();
+}
+
+// ═══ SYNC — 시트명·컬럼명 완전 일치 ═══
+async function syncAll(){
+  if(!D.cfg.url){toast('설정에서 Sheets URL을 입력하세요','er');nav('cfg');return;}
+  var btn=document.getElementById('sync-btn');
+  btn.className='sync-btn busy';btn.textContent='↑ 동기화 중...';
+  try{
+    // 계측기 관리대장
+    var ir=await fetch(D.cfg.url+'?action=instruments');
+    var id=await ir.json();
+    if(id.data&&id.data.length){
+      var lm={};D.inst.forEach(function(i){lm[i.id]=i;});
+      D.inst=id.data.map(function(r){
+        var ex=lm[r.id]||{};
+        // 상태(in/out)는 시트에서 온 값 우선, 없으면 로컬
+        var sheetStatus=r.status||'in';
+        return{
+          id:r.id||'',          // 관리번호
+          name:r.name||'',      // 기기명
+          model:r.model||'',    // 모델명
+          serial:r.serial||'',  // 시리얼번호
+          maker:r.maker||'',    // 제조사
+          purpose:r.purpose||'',// 사용용도
+          cycle:r.cycle||'',    // 교정주기
+          lastCal:r.lastCal||'',// 교정일자
+          nextCal:r.nextCal||'',// 교정만료일
+          location:r.location||'',// 보관위치 (용인/평택)
+          custodian:r.custodian||'',// 관리자
+          note:r.note||'',      // 비고
+          status:sheetStatus,   // 상태 in/out
+          borName:r.borrower||ex.borName||null,// 대여자
+          borAt:ex.borAt||null,
+          borMgr:ex.borMgr||null,
+          borLoc:ex.borLoc||null
+        };
+      }).filter(function(i){return i.id&&i.name;});
+    }
+    // 대여자 명단
+    var br=await fetch(D.cfg.url+'?action=borrowers');
+    var bd=await br.json();
+    if(bd.data&&bd.data.length){
+      D.bor=bd.data.map(function(r){
+        return{name:r.name||'',dept:r.dept||'',email:r.email||'',tel:r.tel||''};
+      }).filter(function(b){return b.name;});
+    }
+    // 대여/반납 이력
+    var hr=await fetch(D.cfg.url+'?action=history');
+    var hd=await hr.json();
+    if(hd.data&&hd.data.length){
+      var sheetIds=new Set(hd.data.map(function(r){return r.id;}));
+      var local=D.hist.filter(function(h){return!sheetIds.has(h.id);});
+      D.hist=[].concat(hd.data,local);
+      D.hist.sort(function(a,b){return new Date(b.ts)-new Date(a.ts);});
+    }
+    D.cfg.sync=new Date().toISOString();
+    save();updOD();
+    btn.className='sync-btn ok';btn.textContent='✓ 완료';
+    setTimeout(function(){btn.className='sync-btn';btn.textContent='↑ 동기화';},3000);
+    toast('✅ 계측기 '+D.inst.length+'개 · 대여자 '+D.bor.length+'명');
+    var cp=document.querySelector('.bn.on');
+    if(cp&&RENDERS[cp.dataset.p])RENDERS[cp.dataset.p]();
+  }catch(e){
+    btn.className='sync-btn';btn.textContent='↑ 동기화';
+    toast('동기화 실패 — Apps Script 배포 설정 확인 (모든 사용자 액세스)','er');
+    console.error(e);
+  }
+}
+
+function postSheet(rec){
+  if(!D.cfg.url)return;
+  fetch(D.cfg.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(rec)}).catch(function(){});
+}
+
+// ═══ OVERDUE ═══
+function getOD(){
+  var now=new Date();
+  return D.inst.filter(function(i){return i.status==='out'&&i.borAt&&Math.floor((now-new Date(i.borAt))/864e5)>=30;});
+}
+function updOD(){
+  var n=getOD().length;
+  var dot=document.getElementById('od-dot');
+  if(n>0)dot.classList.add('on');else dot.classList.remove('on');
+}
+
+// ═══ DASHBOARD ═══
+function renderDash(){
+  var now=new Date(),total=D.inst.length;
+  var avail=D.inst.filter(function(i){return i.status==='in'&&calSt(i.nextCal).cls!=='r';}).length;
+  var rented=D.inst.filter(function(i){return i.status==='out';}).length;
+  var expired=D.inst.filter(function(i){return calSt(i.nextCal).cls==='r';}).length;
+  $v('d-tot',total);$v('d-av',avail);$v('d-rt',rented);$v('d-ex',expired);
+
+  // 교정임박
+  var warns=D.inst.filter(function(i){return calSt(i.nextCal).cls==='o';})
+    .sort(function(a,b){return(calSt(a.nextCal).days||999)-(calSt(b.nextCal).days||999);});
+  $v('d-wn-cnt',warns.length+'개');
+  var wnEl=document.getElementById('d-wn');
+  if(!warns.length){
+    wnEl.innerHTML='<div style="padding:0 14px 8px"><div style="background:var(--gn2);border:1px solid rgba(16,201,110,.2);border-radius:11px;padding:11px 14px;font-size:12px;color:var(--gn)">✅ 90일 이내 교정 만료 계측기 없음</div></div>';
+  }else{
+    wnEl.innerHTML='<div style="padding:0 14px 4px">'+warns.slice(0,6).map(function(i){
+      return '<div style="background:var(--c1);border:1px solid rgba(245,158,11,.2);border-radius:11px;padding:11px 13px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:16px">'+instIco(i.name)+'</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(i.name)+'</div><div style="font-family:var(--mono);font-size:10px;color:var(--t2);margin-top:2px">'+esc(i.id)+' · '+esc(i.location||'')+'</div></div>'+calTag(i.nextCal)+'</div>';
+    }).join('')+'</div>';
+  }
+
+  // 평택/용인 대여현황 (보관위치 기준)
+  function offList(loc,el){
+    var list=D.inst.filter(function(i){return i.status==='out'&&i.location===loc;});
+    if(!list.length){
+      el.innerHTML='<div style="padding:0 14px 8px;font-size:12px;color:var(--t3)">대여중인 계측기 없음</div>';return;
+    }
+    el.innerHTML='<div style="padding:0 14px 8px">'+list.map(function(i){
+      var days=i.borAt?Math.floor((now-new Date(i.borAt))/864e5):0;
+      var dc=days>=30?'var(--rd)':'var(--og)';
+      return '<div style="background:var(--c1);border:1px solid var(--bd);border-radius:11px;padding:11px 13px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:14px">'+instIco(i.name)+'</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(i.name)+'</div><div style="font-family:var(--mono);font-size:10px;color:var(--t2);margin-top:2px">'+esc(i.id)+' · <strong style="color:var(--tx)">'+esc(i.borName||'-')+'</strong></div></div><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:'+dc+'">D+'+days+'</span></div>';
+    }).join('')+'</div>';
+  }
+  offList('평택',document.getElementById('d-pt'));
+  offList('용인',document.getElementById('d-yj'));
+}
+
+// ═══ AUTOCOMPLETE ═══
+function acF(p){
+  var q=document.getElementById(p+'-bor').value.toLowerCase();
+  var dd=document.getElementById(p+'-ac');
+  if(!D.bor.length){dd.innerHTML='<div class="acn">동기화 후 사용 가능합니다</div>';dd.classList.add('on');return;}
+  var fil=q?D.bor.filter(function(b){return b.name.toLowerCase().includes(q)||(b.dept&&b.dept.toLowerCase().includes(q));}):D.bor;
+  if(!fil.length){dd.innerHTML='<div class="acn">검색 결과 없음</div>';dd.classList.add('on');return;}
+  dd.innerHTML=fil.slice(0,10).map(function(b){
+    return '<div class="aci" onmousedown="acSel(\''+p+'\',\''+esc(b.name)+'\')">'+esc(b.name)+'<span class="acm">'+esc(b.dept||'')+'</span></div>';
+  }).join('');
+  dd.classList.add('on');
+}
+function acO(p){acF(p);}
+function acH(p){setTimeout(function(){document.getElementById(p+'-ac').classList.remove('on');},200);}
+function acSel(p,n){
+  document.getElementById(p+'-bor').value=n;
+  document.getElementById(p+'-ac').classList.remove('on');
+  if(p==='r')rUpd();else tUpd();
+}
+function chkBor(name,errId,okId){
+  var has=!D.bor.length||D.bor.some(function(b){return b.name===name;});
+  document.getElementById(errId).style.display=(name&&!has)?'block':'none';
+  document.getElementById(okId).style.display=(name&&has)?'block':'none';
+  return has;
+}
+
+// ═══ RENT ═══
+function renderRent(){
+  rInst=null;
+  ['r-mgr','r-bor','r-loc'].forEach(function(i){document.getElementById(i).value='';});
+  document.getElementById('r-sr').classList.remove('on');
+  document.getElementById('r-cf').classList.remove('on');
+  document.getElementById('r-berr').style.display='none';
+  document.getElementById('r-bok').style.display='none';
+  setQrB('r-qrb','rent','계측기에 부착된 QR코드를 스캔하세요');
+  var s=document.getElementById('r-sub');if(s)s.disabled=true;
+}
+function rUpd(){
+  var mg=v('r-mgr'),br=v('r-bor'),lc=v('r-loc');
+  var vb=chkBor(br,'r-berr','r-bok');
+  var ok=mg&&br&&lc&&rInst&&vb;
+  var s=document.getElementById('r-sub');if(s)s.disabled=!ok;
+  if(rInst&&mg){
+    document.getElementById('r-cf').classList.add('on');
+    $v('rc-nm',rInst.name);$v('rc-id',rInst.id);$v('rc-lc2',rInst.location||'-');
+    $v('rc-mg',mg||'-');$v('rc-br',br||'-');$v('rc-lc',lc||'-');
+    $v('rc-dt',fdt(new Date().toISOString()));
+  }
+}
+function rstRent(){renderRent();toast('초기화','i');}
+function subRent(){
+  var mg=v('r-mgr'),br=v('r-bor'),lc=v('r-loc');
+  if(!mg||!br||!lc||!rInst){toast('모든 항목 입력 + QR 스캔 필요','er');return;}
+  if(D.bor.length&&!D.bor.some(function(b){return b.name===br;})){toast('대여자 명단에 없는 이름입니다','er');return;}
+  if(rInst.status==='out'){toast('이미 대여 중 — '+(rInst.borName||'?'),'er');return;}
+  var borObj=D.bor.find(function(b){return b.name===br;})||{};
+  var ts=new Date().toISOString();
+  var rec={id:'RNT'+Date.now(),type:'rent',instId:rInst.id,instName:rInst.name,
+    mgrName:mg,borName:br,borDept:borObj.dept||'',borTel:borObj.tel||'',
+    useLoc:lc,ts:ts,rentedAt:ts};
+  D.hist.unshift(rec);
+  var i=D.inst.find(function(x){return x.id===rInst.id;});
+  if(i){i.status='out';i.borName=br;i.borLoc=lc;i.borAt=ts;i.borMgr=mg;}
+  save();postSheet(rec);updOD();
+  toast('✅ '+rInst.name+' 대여 완료');renderRent();
+}
+
+// ═══ RETURN ═══
+function renderRet(){
+  tInst=null;
+  ['t-mgr','t-bor','t-note'].forEach(function(i){document.getElementById(i).value='';});
+  document.getElementById('t-sr').classList.remove('on');
+  document.getElementById('t-cf').classList.remove('on');
+  document.getElementById('t-berr').style.display='none';
+  document.getElementById('t-bok').style.display='none';
+  setQrB('t-qrb','ret','반납할 계측기의 QR코드를 스캔하세요');
+  var s=document.getElementById('t-sub');if(s)s.disabled=true;
+}
+function tUpd(){
+  var mg=v('t-mgr'),br=v('t-bor'),nt=v('t-note');
+  var vb=chkBor(br,'t-berr','t-bok');
+  var ok=mg&&br&&tInst&&vb;
+  var s=document.getElementById('t-sub');if(s)s.disabled=!ok;
+  if(tInst&&mg){
+    document.getElementById('t-cf').classList.add('on');
+    $v('tc-nm',tInst.name);$v('tc-id',tInst.id);$v('tc-ob',tInst.borName||'-');
+    $v('tc-mg',mg||'-');$v('tc-br',br||'-');
+    $v('tc-nt',nt||'없음');$v('tc-dt',fdt(new Date().toISOString()));
+  }
+}
+function rstRet(){renderRet();toast('초기화','i');}
+function subRet(){
+  var mg=v('t-mgr'),br=v('t-bor'),nt=v('t-note');
+  if(!mg||!br||!tInst){toast('모든 항목 입력 + QR 스캔 필요','er');return;}
+  if(D.bor.length&&!D.bor.some(function(b){return b.name===br;})){toast('대여자 명단에 없는 이름입니다','er');return;}
+  if(tInst.status!=='out'){toast('현재 대여 중이 아닌 계측기입니다','er');return;}
+  var borObj=D.bor.find(function(b){return b.name===br;})||{};
+  var ts=new Date().toISOString();
+  var rec={id:'RTN'+Date.now(),type:'return',instId:tInst.id,instName:tInst.name,
+    mgrName:mg,borName:br,borDept:borObj.dept||'',borTel:borObj.tel||'',
+    note:nt,returnedAt:ts,ts:ts,rentedAt:tInst.borAt};
+  D.hist.unshift(rec);
+  var i=D.inst.find(function(x){return x.id===tInst.id;});
+  if(i){i.status='in';i.borName=null;i.borLoc=null;i.borAt=null;i.borMgr=null;}
+  save();postSheet(rec);updOD();
+  toast('✅ '+tInst.name+' 반납 완료');renderRet();
+}
+
+// ═══ QR SCAN ═══
+function startScan(target){
+  scanFor=target;
+  document.getElementById('scnttl').textContent=target==='rent'?'📤 대여 — 계측기 QR 스캔':'📥 반납 — 계측기 QR 스캔';
+  document.getElementById('qrel').innerHTML='';
+  document.getElementById('scnov').classList.add('on');
+  setTimeout(function(){
+    try{
+      qrSc=new Html5Qrcode('qrel');
+      qrSc.start({facingMode:'environment'},{fps:10,qrbox:{width:185,height:185}},
+        function(txt){handleScan(txt.trim());},function(){})
+        .catch(function(e){toast('카메라 오류 — 권한 허용 필요','er');console.error(e);});
+    }catch(e){toast('스캐너 오류','er');}
+  },300);
+}
+function handleScan(id){
+  var inst=D.inst.find(function(i){return i.id===id;});
+  if(!inst){toast(D.inst.length?'❌ 미등록: '+id:'계측기 동기화 필요','er');return;}
+  stopScan();document.getElementById('scnov').classList.remove('on');
+  var cs=calSt(inst.nextCal);
+  if(scanFor==='rent'){
+    if(inst.status==='out'){toast('❌ 이미 대여 중 — '+(inst.borName||'?'),'er');return;}
+    rInst=inst;
+    document.getElementById('r-sr').classList.add('on');
+    $v('r-sr-id',inst.id);$v('r-sr-name',inst.name);
+    $v('r-sr-meta',(inst.model||'')+(inst.serial?' · '+inst.serial:'')+(inst.maker?' · '+inst.maker:''));
+    $v('r-sr-loc',inst.location?'📍 '+inst.location:'');
+    document.getElementById('r-sr-cal').innerHTML=calTag(inst.nextCal);
+    setQrBDone('r-qrb','rent',inst.name);
+    if(cs.cls==='r')toast('⚠ 교정 만료 계측기입니다!','er');
+    else if(cs.cls==='o')toast('⚠ 교정 '+cs.lbl,'i');
+    rUpd();
+  }else{
+    if(inst.status!=='out'){toast('❌ 현재 대여 중이 아닙니다','er');return;}
+    tInst=inst;
+    document.getElementById('t-sr').classList.add('on');
+    $v('t-sr-id',inst.id);$v('t-sr-name',inst.name);
+    $v('t-sr-meta','대여자: '+(inst.borName||'-')+' · 대여일: '+fdt(inst.borAt));
+    setQrBDone('t-qrb','ret',inst.name);
+    tUpd();
+  }
+  toast('✅ '+inst.name+' 스캔 완료','i');
+}
+function setQrB(id,target,sub){
+  var el=document.getElementById(id);el.className='qrb';
+  el.innerHTML='<div class="qi">📷</div><div class="qt">QR 스캔</div><div class="qs">'+sub+'</div>';
+  el.onclick=function(){startScan(target);};
+}
+function setQrBDone(id,target,name){
+  var el=document.getElementById(id);el.className='qrb sc';
+  el.innerHTML='<div class="qi">✅</div><div class="qt">'+esc(name)+'</div><div class="qs">스캔 완료 · 탭하면 다시 스캔</div>';
+  el.onclick=function(){startScan(target);};
+}
+function stopScan(){if(qrSc){qrSc.stop().catch(function(){});qrSc=null;}}
+function closeScan(){stopScan();document.getElementById('scnov').classList.remove('on');}
+
+// ═══ INSTRUMENT LIST ═══
+function setChip(el,f){
+  iFilter=f;
+  document.querySelectorAll('.chip[data-f]').forEach(function(c){c.classList.remove('on');});
+  el.classList.add('on');renderInst();
+}
+function renderInst(){
+  var q=(document.getElementById('i-search').value||'').toLowerCase();
+  var f=iFilter;
+  var list=D.inst.filter(function(i){
+    var cs=calSt(i.nextCal);
+    var mq=!q||(i.id+i.name+i.model+i.serial+i.maker).toLowerCase().includes(q);
+    var mf=f==='all'||(f==='av'&&i.status==='in'&&cs.cls!=='r')||(f==='rt'&&i.status==='out')||(f==='ex'&&cs.cls==='r')||(f==='wn'&&cs.cls==='o');
+    return mq&&mf;
+  });
+  var el=document.getElementById('i-list');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="ei">🔍</div><p>해당하는 계측기 없음</p></div>';return;}
+  el.innerHTML=list.map(function(i){
+    var cs=calSt(i.nextCal);
+    var stCls=i.status==='out'?'rt':(cs.cls==='r'?'ex':(cs.cls==='o'?'wn':'av'));
+    var stLbl=i.status==='out'?'대여중':(cs.cls==='r'?'교정만료':(cs.cls==='o'?'교정임박':'대여가능'));
+    var tags=[dDayTag(i.nextCal),i.cycle?'<span class="ictag gray">'+esc(i.cycle)+'</span>':''];
+    if(i.status==='out'&&i.borName)tags.push('<span class="ictag dwn">'+esc(i.borName)+'</span>');
+    if(i.note)tags.push('<span class="ictag gray">'+esc(i.note)+'</span>');
+    return '<div class="icard" onclick="showDtl(\''+i.id+'\')"><div class="ic-hd"><span class="ic-no">'+esc(i.id)+'</span><span class="ic-bdg '+stCls+'">'+stLbl+'</span></div><div class="ic-name-row"><span class="ic-emo">'+instIco(i.name)+'</span><span class="ic-name">'+esc(i.name)+'</span></div><div class="ic-det">'+esc(i.model)+(i.serial?' · '+esc(i.serial):'')+(i.maker?' · '+esc(i.maker):'')+'</div><div class="ic-tags">'+tags.filter(Boolean).join('')+'</div></div>';
+  }).join('');
+}
+function showDtl(id){
+  var i=D.inst.find(function(x){return x.id===id;});if(!i)return;
+  var now=new Date(),days=i.borAt?Math.floor((now-new Date(i.borAt))/864e5):null;
+  $v('m-dtl-ttl',i.name);
+  var rows=[['관리번호',i.id],['기기명',i.name],['모델명',i.model||'-'],['시리얼번호',i.serial||'-'],
+    ['제조사',i.maker||'-'],['사용용도',i.purpose||'-'],['교정주기',i.cycle||'-'],
+    ['교정일자',fd(i.lastCal)],['교정만료일',fd(i.nextCal)],
+    ['보관위치',i.location||'-'],['비고',i.note||'-'],
+    ['상태',i.status==='out'?'대여중':'보관중'],
+    ['대여자',i.borName||'-'],
+    ['대여일',i.borAt?fdt(i.borAt)+(days!==null?' (D+'+days+'일)':''):'-'],
+    ['사용장소',i.borLoc||'-'],['담당 관리자',i.custodian||'-']];
+  document.getElementById('m-dtl-body').innerHTML=
+    '<div style="padding:10px 0">'+
+    '<div style="display:flex;align-items:center;gap:12px;padding:10px 18px 14px;border-bottom:1px solid var(--bd)">'+
+    '<span style="font-size:28px">'+instIco(i.name)+'</span>'+
+    '<div><div style="font-family:var(--mono);font-size:11px;color:var(--cy);margin-bottom:4px">'+esc(i.id)+'</div>'+calTag(i.nextCal)+'</div></div>'+
+    rows.map(function(r){return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 18px;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:12px;color:var(--t2)">'+r[0]+'</span><span style="font-size:12px;font-weight:600;font-family:var(--mono);text-align:right;max-width:58%;word-break:break-all">'+esc(r[1])+'</span></div>';}).join('')+
+    '</div>';
+  document.getElementById('m-dtl').classList.add('on');
+}
+
+// ═══ BORROWER LIST ═══
+function renderBor(){
+  var q=(document.getElementById('b-search').value||'').toLowerCase();
+  var list=D.bor.filter(function(b){return!q||(b.name+b.dept).toLowerCase().includes(q);});
+  var el=document.getElementById('b-list');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="ei">👤</div><p>동기화 후 표시됩니다</p></div>';return;}
+  var depts={};
+  list.forEach(function(b){if(!depts[b.dept])depts[b.dept]=[];depts[b.dept].push(b);});
+  var html='';
+  Object.keys(depts).sort().forEach(function(dept){
+    var ms=depts[dept];
+    html+='<div class="slbl">'+esc(dept||'기타')+'<span class="slbl-r">'+ms.length+'명</span></div><div class="bcard">';
+    html+=ms.map(function(b){
+      var rented=D.inst.find(function(i){return i.status==='out'&&i.borName===b.name;});
+      return '<div class="brow"><div class="bav">'+(rented?'📤':'👤')+'</div><div class="bbody"><div class="bname">'+esc(b.name)+'</div><div class="bmeta">'+esc(b.email||'-')+'</div></div><div class="bright">'+(rented?'<div class="brented-nm">'+esc(rented.name)+'</div>':'')+'<span class="bst '+(rented?'rt':'av')+'">'+(rented?'대여중':'보관중')+'</span></div></div>';
+    }).join('');
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+
+// ═══ HISTORY ═══
+function setHChip(el,f){
+  hFilter=f;
+  document.querySelectorAll('.chip[data-hf]').forEach(function(c){c.classList.remove('on');});
+  el.classList.add('on');renderHist();
+}
+function renderHist(){
+  var q=(document.getElementById('h-search').value||'').toLowerCase();
+  var hf=hFilter,now=new Date();
+  // active 여부: rent 레코드 중 이후에 같은 instId의 return이 없는 것
+  var retSet=new Set(D.hist.filter(function(h){return h.type==='return';}).map(function(h){return h.instId+':'+h.ts;}));
+  var list=D.hist.filter(function(h){
+    var mq=!q||(h.instName+h.borName).toLowerCase().includes(q);
+    if(!mq)return false;
+    var isActive=h.type==='rent'&&D.inst.some(function(i){return i.id===h.instId&&i.status==='out';});
+    var days=h.rentedAt?Math.floor((now-new Date(h.rentedAt))/864e5):0;
+    if(hf==='active')return h.type==='rent'&&isActive;
+    if(hf==='done')  return h.type==='return';
+    if(hf==='over')  return h.type==='rent'&&isActive&&days>=30;
+    return true;
+  }).slice(0,120);
+  var el=document.getElementById('h-list');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="ei">📋</div><p>기록 없음</p></div>';return;}
+  el.innerHTML=list.map(function(h){
+    var isRet=h.type==='return';
+    var dayStr='',dayCls='';
+    if(isRet){
+      var dur=h.rentedAt?Math.floor((new Date(h.returnedAt||h.ts)-new Date(h.rentedAt))/864e5):0;
+      dayStr=dur+'일 사용';dayCls='done';
+    }else{
+      var d=Math.floor((now-new Date(h.rentedAt||h.ts))/864e5);
+      dayStr='D+'+d;dayCls=d>=30?'over':'active';
+    }
+    var noteHtml=isRet&&h.note?'<div class="hnote">📝 '+esc(h.note)+'</div>':'';
+    return '<div class="hrow"><div class="hico '+(isRet?'ret':'rent')+'">'+(isRet?'📥':'📤')+'</div><div class="hbody"><div class="hnm">'+esc(h.instName)+'</div><div class="hmeta">'+esc(h.borName)+' · '+fdt(h.ts)+'</div><div class="hmeta">관리자: '+esc(h.mgrName||'-')+(h.useLoc?' · '+esc(h.useLoc):'')+'</div>'+noteHtml+'</div><div class="hright"><div class="hday '+dayCls+'">'+dayStr+'</div><div class="hst">'+(isRet?'반납완료':'대여중')+'</div></div></div>';
+  }).join('');
+}
+
+// ═══ SETTINGS ═══
+function renderCfg(){
+  document.getElementById('c-url').value=D.cfg.url||'';
+  document.getElementById('c-aname').value=D.cfg.aname||'';
+  document.getElementById('c-aemail').value=D.cfg.aemail||'';
+  $v('c-sync-lbl',D.cfg.sync?'마지막 동기화: '+fdt(D.cfg.sync):'동기화 안됨');
+  document.getElementById('c-script').textContent=mkScript();
+  var ql=document.getElementById('c-qrlist');
+  if(!D.inst.length){ql.innerHTML='<div class="empty"><div class="ei">🔧</div><p>동기화 후 표시됩니다</p></div>';return;}
+  ql.innerHTML=D.inst.map(function(i){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--bdr)"><span>'+instIco(i.name)+'</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(i.name)+'</div><div style="font-family:var(--mono);font-size:10px;color:var(--t2)">'+esc(i.id)+'</div></div><button onclick="showQR(\''+i.id+'\')" style="padding:5px 11px;border-radius:8px;background:var(--cy2);border:1px solid rgba(0,216,236,.3);color:var(--cy);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--sans);flex-shrink:0">QR</button></div>';
+  }).join('');
+}
+function saveCfg(){
+  D.cfg.url=document.getElementById('c-url').value.trim();
+  D.cfg.aname=document.getElementById('c-aname').value.trim();
+  D.cfg.aemail=document.getElementById('c-aemail').value.trim();
+  save();toast('저장 완료');
+  if(D.cfg.url)syncAll();
+}
+
+// ═══ QR ═══
+function showQR(id){
+  curQrI=D.inst.find(function(i){return i.id===id;});if(!curQrI)return;
+  $v('m-qr-nm',curQrI.name);$v('m-qr-id','관리번호: '+curQrI.id);
+  var el=document.getElementById('m-qr-el');el.innerHTML='';
+  new QRCode(el,{text:curQrI.id,width:200,height:200,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});
+  document.getElementById('m-qr').classList.add('on');
+}
+function printOne(){if(curQrI)doPrint([curQrI]);}
+function printAll(){if(!D.inst.length){toast('계측기가 없습니다','er');return;}doPrint(D.inst);}
+function doPrint(list){
+  var cells=list.map(function(i){
+    var tmp=document.createElement('div');tmp.style.cssText='position:absolute;left:-9999px;top:-9999px';document.body.appendChild(tmp);
+    new QRCode(tmp,{text:i.id,width:110,height:110,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});
+    var cv=tmp.querySelector('canvas');var src=cv?cv.toDataURL():'';document.body.removeChild(tmp);
+    return '<div style="border:1px solid #ccc;border-radius:4px;padding:5px;text-align:center;break-inside:avoid"><img src="'+src+'" style="width:100px;height:100px;display:block;margin:0 auto"><div style="font-size:7pt;font-weight:700;margin-top:3px;font-family:sans-serif;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:110px">'+i.name+'</div><div style="font-size:6pt;color:#555;font-family:monospace">'+i.id+'</div><div style="font-size:6pt;color:#888;font-family:monospace">'+i.location+'</div></div>';
+  }).join('');
+  var w=window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QR</title><style>@page{margin:8mm}body{margin:0}.g{display:grid;grid-template-columns:repeat(4,1fr);gap:3mm}</style></head><body><div class="g">'+cells+'</div><script>window.onload=function(){window.print()}<\/script></body></html>');
+  w.document.close();
+}
+
+// ═══ APPS SCRIPT — 시트명/컬럼명 완전 일치 ═══
+function mkScript(){
+  var ae=D.cfg.aemail||'admin@pluseng.co.kr';
+  return [
+'// ══ 플러스이엔지 계측기 관리 Apps Script ══',
+'// 스프레드시트 시트명과 완전히 일치합니다',
+'var ADMIN_EMAIL = "'+ae+'";',
+'var INST_SH  = "계측기 관리대장";',
+'var BOR_SH   = "대여자 명단";',
+'var HIST_SH  = "대여/반납 이력";',
+'',
+'function doGet(e) {',
+'  var ss  = SpreadsheetApp.getActiveSpreadsheet();',
+'  var act = e.parameter.action;',
+'  if (act === "instruments") return R(getInst(ss));',
+'  if (act === "borrowers")   return R(getBor(ss));',
+'  if (act === "history")     return R(getHist(ss));',
+'  return R("ready");',
+'}',
+'',
+'function doPost(e) {',
+'  var ss = SpreadsheetApp.getActiveSpreadsheet();',
+'  var d  = JSON.parse(e.postData.contents);',
+'  var isRent = d.type === "rent";',
+'',
+'  // 1. 대여/반납 이력에 기록',
+'  var hSh = ss.getSheetByName(HIST_SH) || ss.insertSheet(HIST_SH);',
+'  if (hSh.getLastRow() === 0)',
+'    hSh.appendRow(["대여/반납 구분","관리번호","계측기명","대여자명",',
+'                   "부서","연락처","일시","관리자","사용장소","특이사항"]);',
+'  hSh.appendRow([',
+'    isRent ? "대여" : "반납",',
+'    d.instId, d.instName, d.borName,',
+'    d.borDept||"", d.borTel||"",',
+'    new Date(d.ts),',
+'    d.mgrName,',
+'    isRent ? (d.useLoc||"") : "",',
+'    isRent ? "" : (d.note||"")',
+'  ]);',
+'',
+'  // 2. 계측기 관리대장 상태/대여자 업데이트',
+'  var iSh = ss.getSheetByName(INST_SH);',
+'  if (iSh) {',
+'    var data = iSh.getDataRange().getValues();',
+'    var H = data[0].map(function(h){return h.toString().trim();});',
+'    var idI = H.indexOf("관리번호");',
+'    var stI = H.indexOf("상태");',
+'    var brI = H.indexOf("대여자");',
+'    for (var i = 1; i < data.length; i++) {',
+'      if (data[i][idI] && data[i][idI].toString().trim() === d.instId) {',
+'        if (stI >= 0) iSh.getRange(i+1, stI+1).setValue(isRent ? "out" : "in");',
+'        if (brI >= 0) iSh.getRange(i+1, brI+1).setValue(isRent ? d.borName : "");',
+'        break;',
+'      }',
+'    }',
+'  }',
+'  return R("saved");',
+'}',
+'',
+'// 계측기 관리대장 읽기',
+'function getInst(ss) {',
+'  var sh = ss.getSheetByName(INST_SH); if (!sh) return [];',
+'  var rows = sh.getDataRange().getValues();',
+'  var H = rows[0].map(function(h){return h.toString().trim();});',
+'  var M = {관리번호:"id",기기명:"name",모델명:"model",시리얼번호:"serial",',
+'           제조사:"maker",사용용도:"purpose",교정주기:"cycle",',
+'           교정일자:"lastCal",교정만료일:"nextCal",',
+'           보관위치:"location",관리자:"custodian",',
+'           상태:"status",대여자:"borrower",비고:"note"};',
+'  return rows.slice(1).filter(function(r){return r[0];}).map(function(r){',
+'    var o={};',
+'    H.forEach(function(h,i){',
+'      var k=M[h]||h; var v=r[i];',
+'      if (v instanceof Date) v=Utilities.formatDate(v,"Asia/Seoul","yyyy-MM-dd");',
+'      o[k]=v!=null?v.toString().trim():"";',
+'    });',
+'    return o;',
+'  });',
+'}',
+'',
+'// 대여자 명단 읽기',
+'function getBor(ss) {',
+'  var sh = ss.getSheetByName(BOR_SH); if (!sh) return [];',
+'  var rows = sh.getDataRange().getValues();',
+'  var H = rows[0].map(function(h){return h.toString().trim();});',
+'  var M = {이름:"name",부서:"dept",이메일:"email",연락처:"tel"};',
+'  return rows.slice(1).filter(function(r){return r[0];}).map(function(r){',
+'    var o={};',
+'    H.forEach(function(h,i){var k=M[h]||h;o[k]=r[i]?r[i].toString().trim():"";});',
+'    return o;',
+'  });',
+'}',
+'',
+'// 대여/반납 이력 읽기',
+'function getHist(ss) {',
+'  var sh = ss.getSheetByName(HIST_SH); if (!sh) return [];',
+'  var rows = sh.getDataRange().getValues();',
+'  if (rows.length < 2) return [];',
+'  return rows.slice(1).filter(function(r){return r[0];}).map(function(r,idx){',
+'    var isRent = r[0]==="대여";',
+'    var dt = r[6]?new Date(r[6]).toISOString():"";',
+'    return {',
+'      id: "SH"+(rows.length-idx),',
+'      type: isRent?"rent":"return",',
+'      instId:r[1]||"", instName:r[2]||"",',
+'      borName:r[3]||"", borDept:r[4]||"", borTel:r[5]||"",',
+'      ts:dt, rentedAt:isRent?dt:"", returnedAt:isRent?"":dt,',
+'      mgrName:r[7]||"", useLoc:r[8]||"", note:r[9]||""',
+'    };',
+'  }).reverse();',
+'}',
+'',
+'function R(data){',
+'  return ContentService.createTextOutput(JSON.stringify({status:"ok",data:data}))',
+'    .setMimeType(ContentService.MimeType.JSON);',
+'}',
+'',
+'// ── 미반납 이메일 알림 (30/60/90일) ────────────────',
+'function checkOverdue() {',
+'  var ss  = SpreadsheetApp.getActiveSpreadsheet();',
+'  // 대여자 이메일 맵',
+'  var emailMap={};',
+'  var borSh=ss.getSheetByName(BOR_SH);',
+'  if(borSh){',
+'    var bd=borSh.getDataRange().getValues();',
+'    var bH=bd[0].map(function(h){return h.toString().trim();});',
+'    var ni=bH.indexOf("이름"),ei=bH.indexOf("이메일");',
+'    for(var i=1;i<bd.length;i++) if(bd[i][ni]) emailMap[bd[i][ni]]=bd[i][ei]||"";',
+'  }',
+'  // 활성 대여 파악',
+'  var active={};',
+'  var iSh=ss.getSheetByName(INST_SH);',
+'  if(iSh){',
+'    var id=iSh.getDataRange().getValues();',
+'    var iH=id[0].map(function(h){return h.toString().trim();});',
+'    var idI=iH.indexOf("관리번호"),stI=iH.indexOf("상태"),',
+'        brI=iH.indexOf("대여자"),nmI=iH.indexOf("기기명");',
+'    for(var i=1;i<id.length;i++){',
+'      if(id[i][stI]==="out"&&id[i][brI])',
+'        active[id[i][idI]]={bor:id[i][brI],name:id[i][nmI]};',
+'    }',
+'  }',
+'  // 이력에서 대여일 확인',
+'  var hSh=ss.getSheetByName(HIST_SH);',
+'  var rentDate={};',
+'  if(hSh){',
+'    var hd=hSh.getDataRange().getValues();',
+'    for(var i=1;i<hd.length;i++){',
+'      if(hd[i][0]==="대여"&&hd[i][1]&&active[hd[i][1]])',
+'        rentDate[hd[i][1]]=new Date(hd[i][6]);',
+'    }',
+'  }',
+'  var now=new Date(),byBor={};',
+'  Object.keys(active).forEach(function(id){',
+'    var a=active[id],rDate=rentDate[id];',
+'    if(!rDate)return;',
+'    var days=Math.floor((now-rDate)/864e5);',
+'    if(days>0&&days%30===0){',
+'      if(!byBor[a.bor])byBor[a.bor]=[];',
+'      byBor[a.bor].push({id:id,name:a.name,days:days,date:rDate});',
+'    }',
+'  });',
+'  Object.keys(byBor).forEach(function(bor){',
+'    var list=byBor[bor],email=emailMap[bor];',
+'    if(!email)return;',
+'    var days=list[0].days;',
+'    var subj="[플러스이엔지] 계측기 "+days+"일 대여 알림";',
+'    var body=bor+"님,\\n\\n현재 대여 중인 계측기가 "+days+"일이 경과하였습니다.\\n반납 또는 연장 여부를 알려주세요.\\n\\n";',
+'    list.forEach(function(o){',
+'      body+="■ "+o.name+" ["+o.id+"]\\n";',
+'      body+="  대여일: "+Utilities.formatDate(o.date,"Asia/Seoul","yyyy-MM-dd")+"\\n\\n";',
+'    });',
+'    body+="문의: "+ADMIN_EMAIL;',
+'    try{MailApp.sendEmail({to:email,cc:ADMIN_EMAIL,subject:subj,body:body});}catch(e){}',
+'  });',
+'}',
+'',
+'// Apps Script 에디터에서 이 함수를 1회 실행 → 매일 9시 자동화',
+'function setupTrigger(){',
+'  ScriptApp.getProjectTriggers().forEach(function(t){',
+'    if(t.getHandlerFunction()==="checkOverdue")ScriptApp.deleteTrigger(t);',
+'  });',
+'  ScriptApp.newTrigger("checkOverdue").timeBased().atHour(9).everyDays(1).create();',
+'  Logger.log("✅ 매일 오전 9시 미반납 알림 트리거 완료");',
+'}'
+  ].join('\n');
+}
+
+// ═══ DATA ═══
+function expData(){
+  var b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='IMS_'+new Date().toISOString().slice(0,10)+'.json';a.click();toast('내보내기 완료');
+}
+function impData(){document.getElementById('imp-f').click();}
+function doImp(e){
+  var f=e.target.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(ev){try{var x=JSON.parse(ev.target.result);if(x.inst){D=x;save();toast('복원 완료');renderCfg();}else toast('올바른 파일 아닙니다','er');}catch(ex){toast('파일 오류','er');}};
+  r.readAsText(f);e.target.value='';
+}
+function clrData(){
+  if(!confirm('로컬 캐시를 삭제하시겠습니까?'))return;
+  D={inst:[],bor:[],hist:[],cfg:{url:'',aname:'',aemail:'',sync:null}};
+  save();toast('초기화 완료');renderCfg();
+}
+
+// ═══ MODAL ═══
+function closeM(id){document.getElementById(id).classList.remove('on');}
+
+// ═══ UTILS ═══
+function $v(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+function v(id){return document.getElementById(id).value.trim();}
+function fd(s){return s?s.replace(/-/g,'/'):'—';}
+function fdt(s){
+  if(!s)return'—';var d=new Date(s);if(isNaN(d))return s;
+  return d.getFullYear()+'/'+(d.getMonth()+1+'').padStart(2,'0')+'/'+(''+d.getDate()).padStart(2,'0')+' '+(''+d.getHours()).padStart(2,'0')+':'+(''+d.getMinutes()).padStart(2,'0');
+}
+function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''; }
+function toast(msg,type){
+  type=type||'ok';
+  var ct=document.getElementById('toasts');
+  var t=document.createElement('div');t.className='toast '+type;t.textContent=msg;
+  ct.appendChild(t);
+  setTimeout(function(){t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(function(){t.remove();},300);},2800);
+}
+
+// ═══ INIT ═══
+load();renderDash();updOD();
+if(!D.cfg.url)setTimeout(function(){toast('⚙️ 설정에서 Sheets URL을 입력하고 동기화하세요','i');},800);
+</script>
+</body>
+</html>
